@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>랜덤 번호 추첨기</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f4f6f8;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 24px;
+      color: #1a1a1a;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .col {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #555;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: #2563eb;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      margin-bottom: 20px;
+      cursor: pointer;
+    }
+
+    .checkbox-group input {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .checkbox-group span {
+      font-size: 0.9rem;
+      color: #444;
+    }
+
+    button.btn-primary {
+      width: 100%;
+      padding: 14px;
+      background-color: #2563eb;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button.btn-primary:hover {
+      background-color: #1d4ed8;
+    }
+
+    button.btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .error-msg {
+      color: #dc2626;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .history-section {
+      margin-top: 28px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 16px;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .history-header span {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #666;
+    }
+
+    .btn-clear {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .btn-clear:hover {
+      color: #dc2626;
+    }
+
+    .history-list {
+      list-style: none;
+      max-height: 140px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .history-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    /* 팝업(모달) 스타일 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: #ffffff;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      transform: scale(0.8);
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 20px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+
+    .number-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .chip {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .btn-close {
+      padding: 10px 24px;
+      background-color: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-close:hover {
+      background-color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🎲 랜덤 번호 추첨기</h1>
+
+    <div class="row">
+      <div class="col form-group">
+        <label for="minNum">최소 숫자</label>
+        <input type="number" id="minNum" value="1" />
+      </div>
+      <div class="col form-group">
+        <label for="maxNum">최대 숫자</label>
+        <input type="number" id="maxNum" value="45" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="countNum">뽑을 개수</label>
+      <input type="number" id="countNum" value="6" min="1" />
+    </div>
+
+    <label class="checkbox-group">
+      <input type="checkbox" id="allowDup" />
+      <span>중복 허용</span>
+    </label>
+
+    <button class="btn-primary" onclick="generateNumbers()">번호 추첨하기</button>
+
+    <div class="error-msg" id="errorMsg">설정한 범위보다 뽑을 개수가 많습니다.</div>
+
+    <div class="history-section">
+      <div class="history-header">
+        <span>최근 기록</span>
+        <button class="btn-clear" onclick="clearHistory()">기록 삭제</button>
+      </div>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
+  </div>
+
+  <!-- 팝업 모달 영역 -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal-content">
+      <div class="modal-title">🎉 추첨 완료!</div>
+      <div class="number-chips" id="modalChips"></div>
+      <button class="btn-close" onclick="closeModal()">확인</button>
+    </div>
+  </div>
+
+  <script>
+    function generateNumbers() {
+      const min = parseInt(document.getElementById('minNum').value, 10);
+      const max = parseInt(document.getElementById('maxNum').value, 10);
+      const count = parseInt(document.getElementById('countNum').value, 10);
+      const allowDup = document.getElementById('allowDup').checked;
+
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+
+      // 예외 처리
+      if (isNaN(min) || isNaN(max) || isNaN(count)) {
+        showError('모든 항목에 올바른 숫자를 입력해주세요.');
+        return;
+      }
+      if (min >= max) {
+        showError('최소 숫자는 최대 숫자보다 작아야 합니다.');
+        return;
+      }
+      if (count <= 0) {
+        showError('뽑을 개수는 1개 이상이어야 합니다.');
+        return;
+      }
+
+      const totalRange = max - min + 1;
+      if (!allowDup && count > totalRange) {
+        showError(`중복 없이 뽑으려면 개수가 ${totalRange}개 이하이어야 합니다.`);
+        return;
+      }
+
+      // 번호 뽑기 로직
+      const selected = [];
+      if (allowDup) {
+        for (let i = 0; i < count; i++) {
+          const rand = Math.floor(Math.random() * totalRange) + min;
+          selected.push(rand);
+        }
+      } else {
+        const pool = [];
+        for (let i = min; i <= max; i++) pool.push(i);
+        
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        selected.push(...pool.slice(0, count));
+        selected.sort((a, b) => a - b);
+      }
+
+      // 팝업 모달에 칩 생성
+      const modalChips = document.getElementById('modalChips');
+      modalChips.innerHTML = '';
+      selected.forEach((num, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.style.animationDelay = `${index * 0.08}s`;
+        chip.textContent = num;
+        modalChips.appendChild(chip);
+      });
+
+      // 모달 표시 & 히스토리 추가
+      openModal();
+      addHistory(selected);
+    }
+
+    function showError(message) {
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.textContent = message;
+      errorMsg.style.display = 'block';
+    }
+
+    function openModal() {
+      document.getElementById('resultModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('resultModal').classList.remove('active');
+    }
+
+    // 모달 바깥 배경 클릭 시 닫기
+    document.getElementById('resultModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal();
+      }
+    });
+
+    function addHistory(numbers) {
+      const historyList = document.getElementById('historyList');
+      const li = document.createElement('li');
+      li.className = 'history-item';
+      
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+      
+      li.textContent = `[${timeStr}] ${numbers.join(', ')}`;
+      historyList.prepend(li);
+    }
+
+    function clearHistory() {
+      document.getElementById('historyList').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
